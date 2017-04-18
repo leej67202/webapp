@@ -1,0 +1,125 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+"parameters": {
+  "storageNamePrefix": {
+    "type": "string",
+    "maxLength": 11,
+    "defaultValue": "eachsa",
+    "metadata": {
+      "description": "Storage account prefix"
+    }
+  },
+  "vnetNamePrefix": {
+    "type": "string",
+    "maxLength": 11,
+    "defaultValue": "eachsa",
+    "metadata": {
+      "description": "Vnet name prefix"
+    }
+  },
+  "serviceTagDept": {
+    "type": "string",
+    "allowedValues": [
+      "IT Ops",
+      "IT Dev",
+      "Finance",
+      "Marketing",
+      "Management",
+      "Sales",
+      "HR"
+    ],
+    "defaultValue": "IT Ops",
+    "metadata": {
+      "description": "The service Tag value for the company"
+    }
+  },
+    "storageTier": {
+    "type": "string",
+    "allowedValues": [
+      "Standard",
+      "Premium"
+    ],
+    "defaultValue": "Standard",
+    "metadata": {
+      "description": "The storage Tier of storage account."
+    }
+  },
+  "storageSKU": {
+    "type": "string",
+    "allowedValues": [
+      "Standard_LRS",
+      "Standard_ZRS",
+      "Standard_GRS",
+      "Standard_RAGRS",
+      "Premium_LRS"
+    ],
+    "defaultValue": "Standard_LRS",
+    "metadata": {
+      "description": "The type of replication to use for the storage account."
+    }
+  }
+},
+"variables": {
+  "storageName": "[concat(parameters('storageNamePrefix'), uniqueString(resourceGroup().id))]",
+  "vnetName": "[concat(parameters('vnetNamePrefix'), uniqueString(resourceGroup().id))]"
+},
+
+  "resources": [
+  {
+    "name": "[variables('storageName')]",
+    "type": "Microsoft.Storage/storageAccounts",
+    "apiVersion": "2016-01-01",
+    "sku": {
+      "name": "[parameters('storageSKU')]",
+      "tier": "[parameters('storageTier')]"
+    },
+    "kind": "Storage",
+    "location": "[resourceGroup().location]",
+    "tags": {
+      "Department": "[parameters('serviceTagDept')]",
+      "Owner": "[parameters('serviceTagDept')]",
+      "Cost Centre": "[parameters('serviceTagDept')]"
+      },
+    "properties": {
+      "encryption": {
+      "keySource": "Microsoft.Storage",
+      "services": {
+      "blob": {
+                "enabled": true
+              }
+                  }
+                    }
+                  },
+    "dependsOn": []
+  },
+  {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('vnetName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.1.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "subnet1",
+                        "properties": {
+                            "addressPrefix": "10.1.1.0/28"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        }
+],
+    "outputs": {  
+      "rgName" : {
+          "type": "string",
+          "value": "[variables('storageName')]"
+      }
+  }
+}
